@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 
 import { TelegramService } from './telegram.service'
 import { TelegramUpdate } from './telegram.update'
+import { SpeechService } from 'src/services/speech.service'
 
 @Module({
 	imports: [
@@ -16,6 +17,6 @@ import { TelegramUpdate } from './telegram.update'
 			})
 		})
 	],
-	providers: [TelegramUpdate, TelegramService]
+	providers: [TelegramUpdate, TelegramService, SpeechService]
 })
 export class TelegramModule {}

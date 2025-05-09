@@ -3,13 +3,16 @@ import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Bot, Context } from 'grammy'
 
+import { SpeechService } from 'src/services/speech.service'
+
 @Injectable()
 export class TelegramService {
 	private readonly botToken: string
 
 	constructor(
 		@InjectBot() private readonly bot: Bot<Context>,
-		private readonly configService: ConfigService
+		private readonly configService: ConfigService,
+		private readonly speechService: SpeechService
 	) {
 		this.botToken = this.configService.get<string>('TG_BOT_TOKEN') ?? ''
 	}
@@ -42,6 +45,12 @@ export class TelegramService {
 				},
 				duration ? duration : 0 > 300 ? 3000 : 2000
 			)
+
+			const transcription = await this.speechService.transcribeVoice(
+				file.file_path
+			)
+
+			console.log(transcription)
 		} catch (e) {
 			clearInterval(interval)
 			console.error('Ошибка при обработке голосового сообщение', e.message)
