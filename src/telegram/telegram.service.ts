@@ -33,14 +33,14 @@ export class TelegramService {
 				async () => {
 					if (percent < 90) {
 						percent += 5
-						await ctx.editMessageText(
-							String(ctx.chat?.id),
-							progressMessageId,
+						await ctx.api.editMessageText(
+							ctx.chat?.id ?? 0,
+							progressMessageId ?? 0,
 							this.renderProgress(percent)
 						)
 					}
 				},
-				duration ?? 0 * 10
+				duration ? duration : 0 > 300 ? 3000 : 2000
 			)
 		} catch (e) {
 			clearInterval(interval)
