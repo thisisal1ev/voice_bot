@@ -1,8 +1,9 @@
 import { InjectBot } from '@grammyjs/nestjs'
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { Bot, Context } from 'grammy'
+import { Api, Bot, Context } from 'grammy'
 
+import { AiService } from 'src/services/ai.service'
 import { SpeechService } from 'src/services/speech.service'
 
 @Injectable()
@@ -12,7 +13,8 @@ export class TelegramService {
 	constructor(
 		@InjectBot() private readonly bot: Bot<Context>,
 		private readonly configService: ConfigService,
-		private readonly speechService: SpeechService
+		private readonly speechService: SpeechService,
+		private readonly aiService: AiService
 	) {
 		this.botToken = this.configService.get<string>('TG_BOT_TOKEN') ?? ''
 	}
@@ -50,12 +52,35 @@ export class TelegramService {
 				file.file_path
 			)
 
-			console.log(transcription)
+			const { cost, timestamps } = await this.aiService.generateTimestamps(
+				transcription,
+				duration ?? 0
+			)
+
+			clearInterval(interval)
+
+			await this.updateProgress(
+				ctx.api,
+				ctx.chat?.id ?? 0,
+				progressMessageId,
+				100
+			)
+			await ctx.reply(`⌛ Тайм-коды: \n\n${timestamps}`)
+			await ctx.reply(`💸 Стоимость: ${cost}`)
 		} catch (e) {
 			clearInterval(interval)
 			console.error('Ошибка при обработке голосового сообщение', e.message)
 			await ctx.reply('⚠️ Ошибка при обработке голосового сообщение')
 		}
+	}
+
+	private async updateProgress(
+		api: Api,
+		chatId: number,
+		messageId: number,
+		percent: number
+	) {
+		await api.editMessageText(chatId, messageId, this.renderProgress(percent))
 	}
 
 	private renderProgress(percent: number): string {
